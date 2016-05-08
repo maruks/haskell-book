@@ -29,3 +29,13 @@ kessel :: (Ord a, Num b) => a -> b -> a ; kessel = undefined
 -- :t kessel 1 2
 -- :t kessel 1 (2 :: Integer)
 -- :t kessel (1 :: Integer) 2
+
+functionH :: [a] -> Maybe a
+functionH (a : _) = Just a
+functionH [] = Nothing
+
+functionC :: (Ord a) => a -> a -> Bool
+functionC m n = m > n
+
+functionS :: (a,b) -> b
+functionS (_,b) = b
