@@ -1,4 +1,4 @@
-module Main where
+module Chapter5_types where
 
 main :: IO() ; main = undefined
 
