@@ -13,7 +13,7 @@ insert' b (Node left a right)
   | b>a = Node left a (insert' b right)
 
 fromList :: Ord a => [a] -> BinaryTree a
-fromList xs = foldr insert' Leaf xs
+fromList = foldr insert' Leaf
 
 inorder :: BinaryTree a -> [a]
 inorder Leaf = []
