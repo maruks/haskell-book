@@ -1,6 +1,10 @@
 module Chapter11_adt where
 
-import Data.Char (toUpper)
+import Data.Char (toUpper, isLetter, isUpper, toLower)
+import Data.Map.Strict (Map)
+import Data.List (nub, sortOn)
+import qualified Data.Map.Strict as Map
+import Data.Monoid
 
 -- binary tree
 
@@ -70,3 +74,88 @@ capitalizeParagraph' (x:xs) wAcc
 
 capitalizeParagraph :: String -> String
 capitalizeParagraph s = capitalizeParagraph' s []
+
+-- phone exercise
+
+type Buttons = [(Char, String)]
+
+phoneButtons :: Buttons
+phoneButtons =
+  [ ('1', "")
+  , ('2', "abc")
+  , ('3', "def")
+  , ('4', "ghi")
+  , ('5', "jkl")
+  , ('6', "mno")
+  , ('7', "pqrs")
+  , ('8', "tuv")
+  , ('9', "wxyz")
+  , ('0', " +_")
+  , ('#', ".,")]
+
+-- validButtons = "1234567890*#"
+type Digit = Char
+
+-- Valid presses: 1 and up
+type Presses = Int
+
+createMappings :: (Char, String) -> [(Char, (Digit, Presses))]
+createMappings (digit, xs) = [ (ch, (digit, num))  | (num, ch) <- t]
+  where
+    t = zip [1..] $ xs++[digit]
+
+createAllMappings:: Buttons -> (Map Char (Digit, Presses))
+createAllMappings bs = Map.fromList $ foldMap createMappings bs
+
+data DaPhone = DaPhone (Map Char (Digit, Presses)) deriving (Show)
+
+myPhone :: DaPhone
+myPhone = DaPhone $ createAllMappings phoneButtons
+
+convo :: [String]
+convo =
+  [ "Wanna play 20 questions"
+  , "Ya"
+  , "U 1st haha"
+  , "Lol ok. Have u ever tasted alcohol lol"
+  , "Lol ya"
+  , "Wow ur cool haha. Ur turn"
+  , "Ok. Do u think I am pretty Lol"
+  , "Lol ya"
+  , "Haha thanks just making sure rofl ur turn"]
+
+reverseTaps :: DaPhone -> Char -> [(Digit, Presses)]
+
+reverseTaps (DaPhone phone) c = if isUpper c then ('*',1) : [ps] else [ps]
+  where
+    ps = phone Map.! (toLower c)
+
+cellPhonesDead :: DaPhone -> String -> [(Digit, Presses)]
+
+cellPhonesDead p xs = foldMap (\c -> reverseTaps p c) xs
+
+fingerTaps :: [(Digit, Presses)] -> Presses
+
+fingerTaps xs = getSum $ foldMap (Sum . snd) xs
+
+freqs
+  :: (Eq a)
+  => [a] -> [(Int, a)]
+
+freqs xs = [ (n, e) | e <- es, let n = length $ filter (== e) xs]
+  where es = nub xs
+
+mostExpensiveWord :: DaPhone -> String -> (Int, String)
+
+mostExpensiveWord phone str = last $ sortOn fst wExps
+  where
+    ws = words str
+    wExps = [ (e, w) | w <- ws, let e = fingerTaps $ cellPhonesDead phone w]
+
+coolestLtr :: [String] -> (Int, Char)
+
+coolestLtr = (last . sortOn fst . freqs . concat)
+
+coolestWord :: [String] -> (Int, String)
+
+coolestWord = (last . sortOn fst . freqs . concat . map words)
