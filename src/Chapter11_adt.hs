@@ -1,3 +1,5 @@
+{-# LANGUAGE InstanceSigs #-}
+{-# OPTIONS_GHC -fno-warn-missing-methods #-}
 module Chapter11_adt where
 
 import Data.Char (toUpper, isLetter, isUpper, toLower)
@@ -128,11 +130,11 @@ reverseTaps :: DaPhone -> Char -> [(Digit, Presses)]
 
 reverseTaps (DaPhone phone) c = if isUpper c then ('*',1) : [ps] else [ps]
   where
-    ps = phone Map.! (toLower c)
+    ps = phone Map.! toLower c
 
 cellPhonesDead :: DaPhone -> String -> [(Digit, Presses)]
 
-cellPhonesDead p xs = foldMap (\c -> reverseTaps p c) xs
+cellPhonesDead p = foldMap (reverseTaps p)
 
 fingerTaps :: [(Digit, Presses)] -> Presses
 
@@ -154,8 +156,26 @@ mostExpensiveWord phone str = last $ sortOn fst wExps
 
 coolestLtr :: [String] -> (Int, Char)
 
-coolestLtr = (last . sortOn fst . freqs . concat)
+coolestLtr = last . sortOn fst . freqs . concat
 
 coolestWord :: [String] -> (Int, String)
 
-coolestWord = (last . sortOn fst . freqs . concat . map words)
+coolestWord = last . sortOn fst . freqs . concatMap words
+
+-- Hutton’s Razor
+
+data Expr = Lit Integer
+  | Add Expr Expr deriving (Show, Eq)
+
+eval :: Expr -> Integer
+eval (Lit i) = i
+eval (Add e1 e2) = eval e1 + eval e2
+
+printExpr :: Expr -> String
+printExpr (Lit i) = show i
+printExpr (Add e1 e2) = printExpr e1 ++ " + " ++ printExpr e2
+
+instance Num Expr where
+  (+) :: Expr -> Expr -> Expr
+  (+) = Add
+  fromInteger = Lit
