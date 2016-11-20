@@ -3,6 +3,7 @@ module Main where
 import Data.List (sort,nub)
 import Test.QuickCheck
 import Chapter11_adt
+import Chapter15_monoids
 
 propSorted :: [Int] -> Bool
 propSorted xs = inorder_elems == sorted where
@@ -19,3 +20,19 @@ main :: IO ()
 main = do
   quickCheck propSorted
   quickCheck propMapped
+  -- monoids
+  quickCheck (monoidAssoc :: FirstMappend)
+  quickCheck (monoidLeftIdentity :: FstId)
+  quickCheck (monoidRightIdentity :: FstId)
+  -- semigroups
+  quickCheck (semigroupAssoc :: TrivialAssoc)
+  quickCheck (semigroupAssoc :: IdentityAssoc)
+  quickCheck (semigroupAssoc :: TwoAssoc)
+  quickCheck (semigroupAssoc :: ThreeAssoc)
+  quickCheck (semigroupAssoc :: FourAssoc)
+  quickCheck (semigroupAssoc :: BoolConjAssoc)
+  quickCheck (semigroupAssoc :: BoolDisjAssoc)
+  quickCheck (semigroupAssoc :: OrAssoc)
+  quickCheck (semigroupAssoc :: ValidationAssoc)
+  quickCheck (semigroupAssoc :: AccumulateRightAssoc)
+  quickCheck (semigroupAssoc :: AccumulateBothAssoc)
