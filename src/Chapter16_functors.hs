@@ -1,7 +1,10 @@
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Chapter16_functors where
 
+import GHC.Arr
 import Test.QuickCheck hiding (Failure, Success)
-
 import Test.QuickCheck.Function
 
 replaceWithP :: b -> Char
@@ -116,6 +119,175 @@ data Four' a b = Four' a a a b deriving (Eq,Show)
 
 instance Functor (Four' a) where
   fmap f (Four' a b c d) = Four' a b c (f d)
+
+--
+data Possibly a = LolNope | Yeppers a deriving (Eq, Show)
+
+instance Functor Possibly where
+  fmap f (Yeppers v) = Yeppers (f v)
+  fmap f LolNope = LolNope
+
+--
+data Either' a b = Left' a | Right' b deriving (Eq, Show)
+
+instance Functor (Either' a) where
+  fmap f (Left' x) = Left' x
+  fmap f (Right' b) = Right' (f b)
+
+--
+data Wrap f a = Wrap (f a) deriving (Eq, Show)
+
+instance Functor f => Functor (Wrap f) where
+  fmap f (Wrap fa) = Wrap (fmap f fa)   --  fmap (+1 ) (Wrap (Pair 2 3)) = Wrap (Pair 3 4)
+
+--
+getInt :: IO Int
+getInt = fmap read getLine
+
+--
+bumpIt :: IO Int
+bumpIt = do
+  intVal <- getInt
+  return (intVal + 1)
+
+bumpIt' :: IO Int
+bumpIt' = fmap (+1) getInt
+
+-- natural transformations
+
+type Nat f g = forall a. f a -> g a
+
+maybeToList :: Nat Maybe []
+maybeToList Nothing = []
+maybeToList (Just a) = [a]
+
+-- 2
+data BoolAndSomethingElse a = False' a | True' a deriving (Eq, Show)
+
+instance Functor BoolAndSomethingElse where
+  fmap f (True' a) = True' (f a)
+  fmap f (False' a) = False' (f a)
+
+-- 3
+data BoolAndMaybeSomethingElse a = Falsish | Truish a deriving (Eq, Show)
+
+instance Functor BoolAndMaybeSomethingElse where
+  fmap f Falsish = Falsish
+  fmap f (Truish x) = Truish (f x)
+
+-- 4
+newtype Mu f = InF { outF :: f (Mu f) }
+-- kind  (* -> *) -> *
+
+-- 5
+data D = D (Array Word Word) Int Int deriving (Eq, Show)
+-- kind *
+
+-- 1
+data Sum b a = First a | Second b
+instance Functor (Sum e) where
+  fmap f (First a) = First (f a)
+  fmap f (Second b) = Second b
+
+-- 2
+data Company a c b = DeepBlue a c | Something b
+instance Functor (Company e e') where
+  fmap f (Something b) = Something (f b)
+  fmap _ (DeepBlue a c) = DeepBlue a c
+
+-- 3
+data More a b = L b a b | R a b a deriving (Eq, Show)
+instance Functor (More x) where
+  fmap f (L b a b') = L (f b) a (f b')
+  fmap f (R a b a') = R a (f b) a'
+
+-- 1
+data Quant a b = Finance | Desk a | Bloor b
+
+instance Functor (Quant a) where
+  fmap f Finance = Finance
+  fmap f (Desk a) = Desk a
+  fmap f (Bloor b) = Bloor (f b)
+
+-- 2
+data K a b = K a
+
+instance Functor (K b) where
+  fmap f (K a) = K a
+
+-- 3
+newtype Flip f a b = Flip (f b a) deriving (Eq, Show)
+
+newtype K' a b = K' a deriving (Eq, Show)
+
+instance Functor (Flip K' a) where
+  fmap f (Flip (K' a)) = Flip (K' (f a))
+-- fmap (+1) $ Flip (K' 1)
+
+-- 4
+data EvilGoateeConst a b = GoatyConst b deriving (Eq, Show)
+
+instance Functor (EvilGoateeConst a) where
+  fmap f (GoatyConst b) = GoatyConst (f b)
+
+-- 5
+data LiftItOut f a = LiftItOut (f a) deriving (Eq, Show)
+
+instance Functor a => Functor (LiftItOut a) where
+  fmap f (LiftItOut g) = LiftItOut (fmap f g)
+
+-- fmap (+1) $ LiftItOut (Pair 2 3)
+
+-- 6
+data Parappa f g a = DaWrappa (f a) (g a) deriving (Eq, Show)
+
+instance (Functor f, Functor g) => Functor (Parappa f g) where
+  fmap f (DaWrappa a b) = DaWrappa (fmap f a) (fmap f b)
+
+-- fmap (+1) $ DaWrappa (Pair 1 2) (Pair 3 4)
+
+-- 7
+data IgnoreOne f g a b = IgnoringSomething (f a) (g b) deriving (Eq, Show)
+
+instance Functor g => Functor (IgnoreOne f g a) where
+  fmap f (IgnoringSomething a b) = IgnoringSomething a (fmap f b)
+
+-- fmap (+1) $ IgnoringSomething (Pair 1 2) (Pair 3 4)
+
+-- 8
+data Notorious g o a t = Notorious (g o) (g a) (g t) deriving (Eq, Show)
+
+instance Functor g => Functor (Notorious g o a) where
+  fmap f (Notorious a b c) = Notorious a b (fmap f c)
+
+--fmap (+1) $ Notorious (Pair 1 2) (Pair 3 4) (Pair 5 6)
+
+-- 9
+data List a = Nil | Cons a (List a) deriving (Eq, Show)
+
+instance Functor List where
+  fmap f Nil = Nil
+  fmap f (Cons x xs) = Cons (f x) (fmap f xs)
+
+-- fmap (+1) (Cons 1 (Cons 2 Nil))
+
+-- 10
+data GoatLord a
+  = NoGoat
+  | OneGoat a
+  | MoreGoats (GoatLord a)
+              (GoatLord a)
+              (GoatLord a)
+
+-- 11
+
+data TalkToMe a
+  = Halt
+  | Print String
+          a
+  | Read (String -> a)
+
+--
 
 main :: IO ()
 main = do
