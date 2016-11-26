@@ -197,6 +197,7 @@ instance Functor (Company e e') where
 
 -- 3
 data More a b = L b a b | R a b a deriving (Eq, Show)
+
 instance Functor (More x) where
   fmap f (L b a b') = L (f b) a (f b')
   fmap f (R a b a') = R a (f b) a'
@@ -279,13 +280,37 @@ data GoatLord a
               (GoatLord a)
               (GoatLord a)
 
+instance Functor GoatLord where
+  fmap f NoGoat = NoGoat
+  fmap f (OneGoat a) = OneGoat (f a)
+  fmap f (MoreGoats a b c) = MoreGoats (fmap f a) (fmap f b) (fmap f c)
+
 -- 11
 
 data TalkToMe a
   = Halt
-  | Print String
-          a
+  | Print String a
   | Read (String -> a)
+
+instance Functor TalkToMe where
+  fmap f Halt = Halt
+  fmap f (Print s a) = Print s (f a)
+  fmap f (Read g) = Read (f . g)
+
+--
+
+class Bifunctor p where
+    bimap :: (a -> b) -> (c -> d) -> p a c -> p b d  -- covariant
+
+class Profunctor p where
+    dimap :: (b -> a) -> (c -> d) -> p a c -> p b d  -- contravariant
+
+instance Profunctor (->) where
+  dimap f g h = g . h . f
+
+instance Bifunctor Either where
+  bimap f g (Left l) = Left (f l)
+  bimap f g (Right r) = Right (g r)
 
 --
 
