@@ -66,3 +66,36 @@ instance Functor (Constant a) where
 instance Monoid a => Applicative (Constant a) where
   pure a = Constant mempty
   (Constant f) <*> (Constant a) = Constant (mappend f a)
+
+-- 1
+lol1 = const <$> Just "Hello" <*> pure "World"
+lol2 = liftA2 const (Just "Hello") (pure "World")
+
+-- 2
+lol3 = (,,,) <$> Just 90 <*> Just 10 <*> Just "Tierness" <*> pure [1, 2, 3]
+
+-- list
+data List a = Nil | Cons a (List a) deriving (Eq, Show)
+
+append :: List a -> List a -> List a
+append Nil ys = ys
+append (Cons x xs) ys = Cons x $ xs `append` ys
+
+fold :: (a -> b -> b) -> b -> List a -> b
+fold _ b Nil = b
+fold f b (Cons h t) = f h (fold f b t)
+
+concat' :: List (List a) -> List a
+concat' = fold append Nil
+
+flatMap :: (a -> List b) -> List a -> List b
+flatMap f as = concat' $ f <$> as
+
+instance Functor List where
+  fmap f Nil = Nil
+  fmap f (Cons a xs) = Cons (f a) (fmap f xs)
+
+instance Applicative List where
+  pure a = Cons a Nil
+  Nil <*> _ = Nil
+  fs <*> xs = flatMap (\f -> fmap f xs) fs
