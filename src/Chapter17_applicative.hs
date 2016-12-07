@@ -100,6 +100,8 @@ appHomomorphism proxy f a = (pure f <*> pure a) == (pure (\() x -> x) <*> proxy 
 appInterchange :: (Applicative f, Eq (f b)) => f (a->b) -> a -> Bool
 appInterchange u y = (u <*> pure y) == (pure ($ y) <*> u)
 
+-- u <*> pure y == pure ($ y) <*> u
+
 -- list
 data List a = Nil | Cons a (List a) deriving (Eq, Show)
 
@@ -198,19 +200,118 @@ instance (Arbitrary e, Arbitrary a) => Arbitrary (Validation e a) where
 
 instance (Eq e, Eq a) => EqProp (Validation e a) where (=-=) = eq
 
-
 -- 1
-data Pair a = Pair a a deriving Show
+data Pair a = Pair a a deriving (Eq, Show)
+
+instance Functor Pair where
+  fmap f (Pair a b) = Pair (f a) (f a)
+
+instance Applicative Pair where
+  pure a = Pair a a
+  (Pair f1 f2) <*> (Pair a b) = Pair (f1 a) (f2 b)
+
+instance (Arbitrary a) => Arbitrary (Pair a) where
+  arbitrary = do
+    a <- arbitrary
+    return (Pair a a)
+
+instance (Eq a) => EqProp (Pair a) where (=-=) = eq
+
 --2
-data Two a b = Two a b
+data Two a b = Two a b deriving (Eq, Show)
+
+instance Functor (Two a) where
+  fmap f (Two a b) = Two a (f b)
+
+instance Monoid a => Applicative (Two a) where
+  pure = Two mempty
+  (Two a0 f2) <*> (Two a b) = Two (mappend a0 a) (f2 b)
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Two a b) where
+  arbitrary = do
+    a <- arbitrary
+    b <- arbitrary
+    return (Two a b)
+
+instance (Eq a, Eq b) => EqProp (Two a b) where (=-=) = eq
+
 --3
-data Three a b c = Three a b c
+data Three a b c = Three a b c deriving (Eq, Show)
+
+instance Functor (Three a b) where
+  fmap f (Three a b c) = Three a b (f c)
+
+instance (Monoid a, Monoid b) => Applicative (Three a b) where
+  pure = Three mempty mempty
+  (Three a0 b0 f) <*> (Three a b c) = Three (mappend a0 a) (mappend b0 b) (f c)
+
+instance (Arbitrary a, Arbitrary b, Arbitrary c) => Arbitrary (Three a b c) where
+  arbitrary = do
+    a <- arbitrary
+    b <- arbitrary
+    c <- arbitrary
+    return (Three a b c)
+
+instance (Eq a, Eq b, Eq c) => EqProp (Three a b c) where (=-=) = eq
+
 --4
-data Three' a b = Three' a b b
+data Three' a b = Three' a b b deriving (Eq, Show)
+
+instance Functor (Three' a) where
+  fmap f (Three' a b c) = Three' a (f b) (f c)
+
+instance (Monoid a) => Applicative (Three' a) where
+  pure a = Three' mempty a a
+  (Three' a1 f1 f2) <*> (Three' a2 b1 b2) = Three' (mappend a1 a2) (f1 b1) (f2 b2)
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Three' a b) where
+  arbitrary = do
+    a <- arbitrary
+    b1 <- arbitrary
+    b2 <- arbitrary
+    return (Three' a b1 b2)
+
+instance (Eq a, Eq b) => EqProp (Three' a b) where (=-=) = eq
+
 --5
-data Four a b c d = Four a b c d
+data Four a b c d = Four a b c d deriving (Eq, Show)
+
+instance Functor (Four a b c) where
+  fmap f (Four a b c d) = Four a b c (f d)
+
+instance (Monoid a, Monoid b, Monoid c) => Applicative (Four a b c) where
+  pure = Four mempty mempty mempty
+  (Four a0 b0 c0 f) <*> (Four a b c d) = Four (mappend a0 a) (mappend b0 b) (mappend c0 c) (f d)
+
+instance (Arbitrary a, Arbitrary b, Arbitrary c, Arbitrary d) => Arbitrary (Four a b c d) where
+  arbitrary = do
+    a <- arbitrary
+    b <- arbitrary
+    c <- arbitrary
+    d <- arbitrary
+    return (Four a b c d)
+
+instance (Eq a, Eq b, Eq c, Eq d) => EqProp (Four a b c d) where (=-=) = eq
+
 --6
-data Four' a b = Four' a a a b
+data Four' a b = Four' a a a b deriving (Eq, Show)
+
+instance Functor (Four' a) where
+  fmap f (Four' a1 a2 a3 b) = Four' a1 a2 a3 (f b)
+
+instance (Monoid a) => Applicative (Four' a) where
+  pure = Four' mempty mempty mempty
+  (Four' a0 b0 c0 f) <*> (Four' a b c d) = Four' (mappend a0 a) (mappend b0 b) (mappend c0 c) (f d)
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Four' a b) where
+  arbitrary = do
+    a1 <- arbitrary
+    a2 <- arbitrary
+    a3 <- arbitrary
+    b <- arbitrary
+    return (Four' a1 a2 a3 b)
+
+instance (Eq a, Eq b) => EqProp (Four' a b) where (=-=) = eq
 
 --
 stops :: String
@@ -226,3 +327,9 @@ main = do
        quickBatch $ applicative (undefined :: Validation String (String, String, String))
        quickBatch $ applicative (undefined :: List (String, Int, Char))
        quickBatch $ applicative (undefined :: ZipList' (String, Int, Char))
+       quickBatch $ applicative (undefined :: Three String String (String, String, String))
+       quickBatch $ applicative (undefined :: Pair (String, String, String))
+       quickBatch $ applicative (undefined :: Two String (String, String, String))
+       quickBatch $ applicative (undefined :: Three' String (String, String, String))
+       quickBatch $ applicative (undefined :: Four String String String (String, String, String))
+       quickBatch $ applicative (undefined :: Four' String (String, String, String))
