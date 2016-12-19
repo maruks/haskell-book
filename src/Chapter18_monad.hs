@@ -133,8 +133,51 @@ instance Arbitrary a => Arbitrary (List a) where
 
 instance Eq a => EqProp (List a) where (=-=) = eq
 
---
+-- Kleisli composition  (<=<) (>=>)
 
+mcomp :: Monad m => (b -> m c) -> (a -> m b) -> a -> m c
+mcomp f g a = g a >>= f
+
+--
+sayHi :: String -> IO String
+sayHi greeting = do
+  putStrLn greeting
+  getLine
+
+readM :: Read a => String -> IO a
+readM = return . read
+
+getAge :: String -> IO Int
+getAge = sayHi >=> readM
+
+askForAge :: IO Int
+askForAge = getAge "Hello! How old are you? "
+
+-- 1 join
+j01n :: Monad m => m (m a) -> m a
+j01n x = x >>= id
+
+--2
+l1 :: Monad m => (a -> b) -> m a -> m b
+l1 = fmap
+
+--3
+l2 :: Monad m => (a -> b -> c) -> m a -> m b -> m c
+l2 = undefined
+
+--4
+a :: Monad m => m a -> m (a -> b) -> m b
+a = undefined
+
+-- 5
+meh :: Monad m => [a] -> (a -> m b) -> m [b]
+meh = undefined
+
+-- 6
+flipType :: (Monad m) => [m a] -> m [a]
+flipType = undefined
+
+--
 main = do
        let sum = undefined :: Sum String (String, String, String)
            nope = undefined :: Nope (String, String, String)
