@@ -163,19 +163,30 @@ l1 = fmap
 
 --3
 l2 :: Monad m => (a -> b -> c) -> m a -> m b -> m c
-l2 = undefined
+l2 f ma mb = let mb2c = fmap f ma in
+               mb2c <*> mb
 
 --4
 a :: Monad m => m a -> m (a -> b) -> m b
-a = undefined
+a = flip (<*>)
 
 -- 5
+mconz :: Monad m => b -> m [b] -> m [b]
+mconz b = fmap (b :)
+--  mb >>= (return . (b :))
+--         (\bs -> return (b : bs))
+
 meh :: Monad m => [a] -> (a -> m b) -> m [b]
-meh = undefined
+meh [] f = return []
+meh (x:xs) f = f x >>= (\b -> (b :) <$> meh xs f)
+--             f x >>= (\b -> b `mconz` meh xs f)
+
+-- meh [1,2,3] Just  = Just [1,2,3]
 
 -- 6
 flipType :: (Monad m) => [m a] -> m [a]
-flipType = undefined
+flipType ma = meh ma (join . return)
+--                   (\m -> m >>= return m)
 
 --
 main = do
