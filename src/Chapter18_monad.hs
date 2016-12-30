@@ -163,8 +163,7 @@ l1 = fmap
 
 --3
 l2 :: Monad m => (a -> b -> c) -> m a -> m b -> m c
-l2 f ma mb = let mb2c = fmap f ma in
-               mb2c <*> mb
+l2 f ma mb = f <$> ma <*> mb
 
 --4
 a :: Monad m => m a -> m (a -> b) -> m b
