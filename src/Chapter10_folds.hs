@@ -111,3 +111,7 @@ myMaximumBy f xs = foldr (\e a -> if f e a == GT then e else a) (head xs) xs
 
 myMinimumBy :: (a -> a -> Ordering) -> [a] -> a
 myMinimumBy f xs = foldr (\e a -> if f e a == LT then e else a) (head xs) xs
+
+listId = foldr (\h t -> h : t) "0" "1234"  -- "12340"
+
+listRev = foldl (\a e -> e : a) "0" "1234" -- "43210"
