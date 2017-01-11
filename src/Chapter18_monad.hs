@@ -187,6 +187,11 @@ flipType :: (Monad m) => [m a] -> m [a]
 flipType ma = meh ma (join . return)
 --                   (\m -> m >>= return m)
 
+-- filterM :: Applicative m => (a -> m Bool) -> [a] -> m [a]
+
+powerset :: [a] -> [[a]]
+powerset = filterM (const [True, False])
+
 --
 main = do
        let sum = undefined :: Sum String (String, String, String)
