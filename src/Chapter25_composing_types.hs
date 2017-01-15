@@ -36,16 +36,16 @@ class Bifunctor p where
   second = bimap id
 
 --1.
-data Deux a b = Deux a b
+data Deux a b = Deux a b deriving(Eq, Show)
 --2.
-data Const a b = Const a
+data Const a b = Const a deriving(Eq, Show)
 --3.
-data Drei a b c = Drei a b c
+data Drei a b c = Drei a b c deriving(Eq, Show)
 --4.
-data SuperDrei a b c = SuperDrei a b
+data SuperDrei a b c = SuperDrei a b deriving(Eq, Show)
 --5.
-data SemiDrei a b c = SemiDrei a
+data SemiDrei a b c = SemiDrei a deriving(Eq, Show)
 --6.
-data Quadriceps a b c d = Quadzzz a b c d
+data Quadriceps a b c d = Quadzzz a b c d deriving(Eq, Show)
 --7.
-data Either a b = Left a | Right b
+data Either a b = Left a | Right b deriving(Eq, Show)
