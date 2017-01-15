@@ -16,9 +16,12 @@ instance (Functor f, Functor g) => Functor (Compose f g) where
 
 instance (Applicative f, Applicative g) => Applicative (Compose f g) where
   pure :: a -> Compose f g a
-  pure = undefined
+  pure a = Compose $ (pure . pure) a
+
   (<*>) :: Compose f g (a -> b) -> Compose f g a -> Compose f g b
-  (Compose f) <*> (Compose a) = undefined
+  (Compose f) <*> (Compose a) = Compose $ (<*>) <$> f <*> a
+
+-- pure (+1) <*> (Compose [Just 1])
 
 instance (Foldable f, Foldable g) => Foldable (Compose f g) where
   foldMap = undefined
