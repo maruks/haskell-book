@@ -101,24 +101,46 @@ newtype ReaderT r m a = ReaderT { runReaderT :: r -> m a }
 instance (Functor m) => Functor (ReaderT s m) where
   fmap f (ReaderT r) = ReaderT $ (fmap . fmap) f r -- fmap f . r
 
-instance (Monad m) => Applicative (ReaderT s m) where
-  pure = undefined
-  (<*>) = undefined
+instance (Applicative m) => Applicative (ReaderT r m) where
+  pure a = ReaderT (pure (pure a))
+  (ReaderT r1) <*> (ReaderT r2) = ReaderT $ liftA2 (<*>) r1 r2
+  --                              ReaderT $ (<*>) <$> r1 <*> r2
 
-instance (Monad m) => Monad (ReaderT s m) where
+instance (Monad m) => Monad (ReaderT r m) where
   return = pure
-  sma >>= f = undefined
+  (>>=) :: ReaderT r m a -> (a -> ReaderT r m b) -> ReaderT r m b
+  ReaderT rma >>= f = ReaderT (\r -> rma r >>= ($ r) . runReaderT . f)
+  --                                        (\a -> runReaderT (f a) r)
+
+-- ReaderT $ \r -> do
+-- a <- rma r
+-- runReaderT (f a)  r
 
 -- StateT
 newtype StateT s m a = StateT { runStateT :: s -> m (a,s) }
 
-instance (Functor m) => Functor (StateT s m) where
-  fmap f m = undefined
+instance (Functor m) =>
+         Functor (StateT s m) where
+  fmap :: (a -> b) -> StateT s m a -> StateT s m b
+  fmap f (StateT st) = StateT (\s -> (\(a1, s1) -> (f a1, s)) <$> st s)
 
-instance (Monad m) => Applicative (StateT s m) where
-  pure = undefined
-  (<*>) = undefined
+instance (Monad m) =>
+         Applicative (StateT s m) where
+  pure a = StateT (\s -> return (a, s))
+  (<*>) :: StateT s m (a -> b) -> StateT s m a -> StateT s m b
+  (StateT mfab) <*> (StateT ma) =
+    StateT
+      (\s -> do
+         (a2b, s1) <- mfab s
+         (a2, s2) <- ma s1
+         return (a2b a2, s2))
 
-instance (Monad m) => Monad (StateT s m) where
+instance (Monad m) =>
+         Monad (StateT s m) where
   return = pure
-  sma >>= f = undefined
+  (>>=) :: StateT s m a -> (a -> StateT s m b) -> StateT s m b
+  StateT sma >>= f =
+    StateT
+      (\s -> do
+         (a1, s1) <- sma s
+         runStateT (f a1) s)
