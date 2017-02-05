@@ -4,6 +4,11 @@ module Chapter25_monad_transformers where
 import Control.Applicative (liftA2)
 import Control.Monad
 
+import Control.Monad.Trans.Class -- MonadTrans
+import Control.Monad.IO.Class -- MonadIO
+
+-- https://www.schoolofhaskell.com/user/commercial/content/monad-transformers
+
 -- IdentityT
 newtype Identity a = Identity { runIdentity :: a } deriving (Eq, Show)
 
@@ -144,3 +149,31 @@ instance (Monad m) =>
       (\s -> do
          (a1, s1) <- sma s
          runStateT (f a1) s)
+
+-- MonadTrans
+-- Given a monad m, we can "lift" into a constructed monad transformer t so long as t is an instance of MonadTrans
+-- lift :: Monad m => m a -> t m a
+
+-- 1.
+instance MonadTrans (EitherT e) where
+  lift = undefined
+
+-- 2.
+instance MonadTrans (StateT s) where
+  lift = undefined
+
+-- MonadIO
+-- liftIO allows us to lift an IO action into a transformer stack that is built on top of IO
+-- liftIO :: IO a -> m a
+
+-- 1. MaybeT
+instance (MonadIO m) => MonadIO (MaybeT m) where
+  liftIO = undefined
+
+-- 2. ReaderT
+instance (MonadIO m) => MonadIO (ReaderT r m) where
+  liftIO = undefined
+
+-- 3. StateT
+instance (MonadIO m) => MonadIO (StateT s m) where
+  liftIO = undefined
