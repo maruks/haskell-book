@@ -154,26 +154,63 @@ instance (Monad m) =>
 -- Given a monad m, we can "lift" into a constructed monad transformer t so long as t is an instance of MonadTrans
 -- lift :: Monad m => m a -> t m a
 
+-- liftM :: Monad m => (a -> r) -> m a -> m r
+
+instance MonadTrans IdentityT where
+  lift = IdentityT
+
+instance MonadTrans MaybeT where
+  lift :: (Monad m) => m a -> MaybeT m a
+  -- newtype MaybeT (m :: * -> *) a = MaybeT {runMaybeT :: m (Maybe a)}
+  lift = MaybeT . fmap Just
+  --              liftM
+
+instance MonadTrans (ReaderT r) where
+  lift :: (Monad m) => m a -> ReaderT r m a
+  -- newtype ReaderT r (m :: * -> *) a = ReaderT {runReaderT :: r -> m a}
+  lift = ReaderT . const
+
 -- 1.
 instance MonadTrans (EitherT e) where
-  lift = undefined
+  lift :: (Monad m) => m a -> EitherT e m a
+  -- newtype EitherT e (m :: * -> *) a = EitherT {runEitherT :: m (Either e a)}
+  -- lift = EitherT . (>>=  pure . Right)
+  lift = EitherT . fmap Right
 
 -- 2.
 instance MonadTrans (StateT s) where
-  lift = undefined
+  lift :: (Monad m) => m a -> StateT s m a
+  -- newtype StateT s (m :: * -> *) a = StateT {runStateT :: s -> m (a, s)}
+  -- lift m = StateT (\s -> m >>= (\a -> pure (a, s)))
+  -- lift = StateT . (\m s -> m >>= (pure . flip (,) s))
+  lift = StateT . (\m s -> fmap (flip (,) s) m)
 
 -- MonadIO
 -- liftIO allows us to lift an IO action into a transformer stack that is built on top of IO
 -- liftIO :: IO a -> m a
 
+-- 1. liftIO . return = return
+-- 2. liftIO (m >>= f) = liftIO m >>= (liftIO . f)
+
+-- 1. IdentityT
+instance (MonadIO m) => MonadIO (IdentityT m) where
+  liftIO :: IO a -> IdentityT m a
+  liftIO = IdentityT . liftIO
+  --       lift
+
+-- 2. EitherT
+instance (MonadIO m) => MonadIO (EitherT e m) where
+  liftIO :: IO a -> EitherT e m a
+  liftIO = lift . liftIO
+
 -- 1. MaybeT
 instance (MonadIO m) => MonadIO (MaybeT m) where
-  liftIO = undefined
+  liftIO = lift . liftIO
 
 -- 2. ReaderT
 instance (MonadIO m) => MonadIO (ReaderT r m) where
-  liftIO = undefined
+  liftIO = lift . liftIO
 
 -- 3. StateT
 instance (MonadIO m) => MonadIO (StateT s m) where
-  liftIO = undefined
+  liftIO = lift . liftIO
