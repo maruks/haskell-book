@@ -1,13 +1,13 @@
 {-# LANGUAGE InstanceSigs #-}
 module Chapter25_monad_transformers where
 
-import Control.Applicative (liftA2)
+import Control.Applicative (liftA2, Alternative(..))
 import Control.Monad
 
 import Control.Monad.Trans.Class -- MonadTrans
 import Control.Monad.IO.Class -- MonadIO
 
--- https://www.schoolofhaskell.com/user/commercial/content/monad-transformers
+import Debug.Trace
 
 -- IdentityT
 newtype Identity a = Identity { runIdentity :: a } deriving (Eq, Show)
@@ -70,8 +70,8 @@ instance Functor m => Functor (EitherT e m) where
   fmap :: (a -> b) -> EitherT e m a -> EitherT e m b
   fmap f (EitherT m) = EitherT $ (fmap . fmap) f m
 
-instance Applicative m => Applicative (EitherT e m) where
-  pure = pure
+instance Monad m => Applicative (EitherT e m) where
+  pure = EitherT . return . Right
   (<*>) :: EitherT e m (a -> b) -> EitherT e m a -> EitherT e m b
   (EitherT fab) <*> (EitherT ema) = EitherT $ liftA2 (<*>) fab ema
 
@@ -214,3 +214,38 @@ instance (MonadIO m) => MonadIO (ReaderT r m) where
 -- 3. StateT
 instance (MonadIO m) => MonadIO (StateT s m) where
   liftIO = lift . liftIO
+
+-- https://www.schoolofhaskell.com/user/commercial/content/monad-transformers
+
+instance (Functor m, Monad m) => Alternative (MaybeT m) where
+  empty = MaybeT (return Nothing)
+  x <|> y =
+    MaybeT $ do
+      v <- runMaybeT x
+      case v of
+        Nothing -> runMaybeT y
+        Just _ -> return v
+
+main = do
+  password <- runEitherT $ runMaybeT getPassword'
+  case traceShow password password of
+     Right (Just p) -> putStrLn "valid password!"
+     Right Nothing -> putStrLn "invalid password!"
+     Left _ -> putStrLn "LOL"
+
+isValid :: String -> Bool
+isValid = (>= 10) . length
+
+getPassword :: MaybeT IO String
+getPassword = do
+  password <- lift getLine
+  guard (isValid (traceShow password password))
+  return password
+
+data MyPasswordError = NoSuchUser | WrongPassword deriving Show
+
+getPassword' :: MaybeT (EitherT MyPasswordError IO) String
+getPassword'  = do
+  password <- liftIO getLine
+  guard (isValid (traceShow password password))
+  return password
