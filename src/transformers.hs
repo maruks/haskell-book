@@ -71,8 +71,6 @@ printError err = do
     InvalidEmail -> "Invalid email address entered."
   throwE err
 
-
-
 userLogin :: ExceptT LoginError IO Text
 userLogin = do
   token      <- getToken

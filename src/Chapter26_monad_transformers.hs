@@ -1,5 +1,5 @@
 {-# LANGUAGE InstanceSigs #-}
-module Chapter25_monad_transformers where
+module Chapter26_monad_transformers where
 
 import Control.Applicative (liftA2, Alternative(..))
 import Control.Monad
