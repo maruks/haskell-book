@@ -78,10 +78,10 @@ instance Arbitrary a => Arbitrary (Identity a) where
   arbitrary = do a <- arbitrary
                  return (Identity a)
 
-instance Arbitrary a => Arbitrary (Sum a) where
-  arbitrary = do
-    i <- arbitrary
-    return (Sum i)
+-- instance Arbitrary a => Arbitrary (Sum a) where
+--   arbitrary = do
+--     i <- arbitrary
+--     return (Sum i)
 
 type IdentityAssoc = Identity (Sum Int) -> Identity (Sum Int) -> Identity (Sum Int) -> Bool
 
