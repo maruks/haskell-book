@@ -2,8 +2,6 @@
 
 module Records (S(foo), T(..)) where
 
-import GHC.Records (HasField(..))
-
 data S = MkS { foo :: Int } deriving (Show)
 data T = MkT { foo :: Int, bar :: String } deriving (Show)
 data U = MkU { bar :: Int, baz :: Int } deriving (Show)
