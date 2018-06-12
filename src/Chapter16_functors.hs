@@ -1,5 +1,5 @@
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances, InstanceSigs #-}
 
 module Chapter16_functors where
 
@@ -297,6 +297,10 @@ instance Functor TalkToMe where
   fmap f (Print s a) = Print s (f a)
   fmap f (Read g) = Read (f . g)
 
+-- instance Functor ((->) a) where
+--   fmap :: (z0 -> z1) -> (a -> z0) -> (a -> f z1)
+--   fmap = (.)
+
 --
 
 class Bifunctor p where
@@ -311,6 +315,17 @@ instance Profunctor (->) where
 instance Bifunctor Either where
   bimap f g (Left l) = Left (f l)
   bimap f g (Right r) = Right (g r)
+
+--
+
+newtype Predicate a = Predicate { getPredicate :: a -> Bool }
+
+class ContraFunctor f where
+  cmap :: (b -> a) -> f a -> f b
+
+instance ContraFunctor Predicate where
+  cmap :: (b -> a) -> Predicate a -> Predicate b
+  cmap f (Predicate p) = Predicate (p . f)
 
 --
 
